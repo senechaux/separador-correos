@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<meta name="description" content="description"/>
+<meta name="keywords" content="keywords"/> 
+<meta name="author" content="author"/> 
+<link rel="stylesheet" type="text/css" href="default.css" media="screen"/>
+<style rel="stylesheet" type="text/css">
+	textarea.correos {
+		width: 99%;
+		height: 10em;
+	}
+	textarea.bloqueCorreos {
+		width: 99%;
+		height: 10em;
+	}
+</style>
+<title>Enviar correos</title>
+
+<script type="text/javascript">
+	function cargarEjemplo(){
+		document.getElementById("correos").innerHTML = document.getElementById("ejemploCorreos").innerHTML;  
+	}
+
+	function separarCorreos(){
+		//cargarEjemplo();
+		var numCorreos = document.getElementById("numCorreos").value;
+		var separador = document.getElementById("separador").value;
+		var to = document.getElementById("to").checked;
+		var cc = document.getElementById("cc").checked;
+		var bcc = document.getElementById("bcc").checked;
+		var incluirCuerpo = document.getElementById("incluirCuerpo").checked;
+		var subject = new String(document.getElementById("subject").value);
+		var correos = new String(document.getElementById("correos").value);
+		var arrayCorreos = correos.split(separador);
+
+		var correo;
+		var grupoCorreos;
+		var correosNoValidos = "";
+		var numCorreosNoValidos = 0;
+		var bloquesCorreos = new String("");
+		var gruposCorreos = new Array();
+		var i;
+		var j = 0;
+		gruposCorreos[j] = "";
+		for (i in arrayCorreos){
+			correo = arrayCorreos[i].replace(/\s/gi,"");
+			correo = correo.replace(/\n/gi,"");
+			if (correo != ""){
+				if (isEmailAddress(correo)){
+					gruposCorreos[j] += correo + separador + "";
+				}else{
+					correosNoValidos += correo + "; ";
+					numCorreosNoValidos++;
+				}
+			}
+			if (i > 0 && i%numCorreos == 0){
+				j++;
+				gruposCorreos[j] = "";
+			}
+		}
+		var contadorCorreos = i;
+		for (i in gruposCorreos){
+			grupoCorreos = gruposCorreos[i];
+			bloquesCorreos += "<br /><textarea class='bloqueCorreos' id='ta"+i+"'>"+grupoCorreos.replace(/;/gi,"; ")+"</textarea>"
+			bloquesCorreos += "<br /><input type='button' onClick=\"javascript:copy_clip('"+grupoCorreos+"','ta"+i+"');\" value='copiar'>"
+			bloquesCorreos += "<input id='btBloqueCorreos"+i+"' type='button' onClick=\"javascript:document.location.href='mailto:";
+			if (to) bloquesCorreos += grupoCorreos;
+			bloquesCorreos += "?";
+			if (bcc) bloquesCorreos += "bcc="+grupoCorreos + "&";
+			if (cc) bloquesCorreos += "cc="+grupoCorreos + "&";
+			bloquesCorreos += "subject="+subject;
+			// bloquesCorreos += "body="+ "&" + body;
+			bloquesCorreos += "';\" value='crear correo con estas direcciones'>";
+		}
+
+		numBloquesCorreos = j;
+		
+		document.getElementById("botonEnviarTodos").style.display = 'inline';
+		document.getElementById("bloquesCorreos").innerHTML = bloquesCorreos;
+		document.getElementById("contadorCorreos").innerHTML = "Hay "+contadorCorreos+" correos.";
+		document.getElementById("correosNoValidos").innerHTML = "Hay "+numCorreosNoValidos+" correos no válido/s o con errores:<br>"+correosNoValidos;
+	}
+
+	var numBloquesCorreos;
+	function crearCorreos(){
+		//alert(numBloquesCorreos);
+		var i;
+		for (j=0; j < numBloquesCorreos; j++) {
+			document.getElementById("btBloqueCorreos"+j).click();
+		}
+	}
+
+	function isEmailAddress(email)
+	{
+		var filter=/^[A-Za-z0-9][A-Za-z0-9_.-]*@[A-Za-z0-9_-]+\.[A-Za-z0-9_.-]+[A-za-z]$/;
+		if ((email.length > 0) && (filter.test(email))){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+	function copy_clip(meintext,ta)
+	{
+		document.getElementById(ta).select();
+		if (window.clipboardData){
+			// the IE-manier
+			window.clipboardData.setData("Text", meintext);
+			// waarschijnlijk niet de beste manier om Moz/NS te detecteren;
+			// het is mij echter onbekend vanaf welke versie dit precies werkt:
+		}
+		else if (window.netscape){
+			// dit is belangrijk maar staat nergens duidelijk vermeld:
+			// you have to sign the code to enable this, or see notes below
+			netscape.security.PrivilegeManager.enablePrivilege('UniversalXPConnect');
+			
+			// maak een interface naar het clipboard
+			var clip = Components.classes['@mozilla.org/widget/clipboard;1']
+				.createInstance(Components.interfaces.nsIClipboard);
+			if (!clip) return;
+
+			// maak een transferable
+			var trans = Components.classes['@mozilla.org/widget/transferable;1']
+				.createInstance(Components.interfaces.nsITransferable);
+			if (!trans) return;
+
+			// specificeer wat voor soort data we op willen halen; text in dit geval
+			trans.addDataFlavor('text/unicode');
+
+			// om de data uit de transferable te halen hebben we 2 nieuwe objecten
+			// nodig om het in op te slaan
+			var str = new Object();
+			var len = new Object();
+
+			var str = Components.classes["@mozilla.org/supports-string;1"]
+				.createInstance(Components.interfaces.nsISupportsString);
+
+			var copytext=meintext;
+			
+			str.data=copytext;
+			
+			trans.setTransferData("text/unicode",str,copytext.length*2);
+			
+			var clipid=Components.interfaces.nsIClipboard;
+			
+			if (!clip) return false;
+			
+			clip.setData(trans,null,clipid.kGlobalClipboard);
+		}
+		alert("Se ha copiado al portapapeles el siguiente texto:\n\n" + meintext);
+		
+		return false;
+	} 
+</script>
+
+
+</head>
+<body>
+<div class="container">
+
+	<div class="title">
+		<h1 id="title">Separador de correos</h1>
+	</div>
+
+	<div class="navigation">
+		<div class="clearer"><span></span></div>
+	</div>
+
+	<div class="holder_top"></div>
+	<div class="holder">
+
+		<form action="" name="formCorreos" id="formCorreos">
+			<label for="numCorreos">Número de correos por bloque: </label>
+			<input type="text" id="numCorreos" name="numCorreos" value="50" style="width:2em; text-align:center;" />
+			<br />
+			<label for="separador">Separador de los correos: </label>
+			<input type="text" id="separador" name="separador" value=";" style="width:2em; text-align:center;" />
+			<br />
+			<input type="checkbox" id="to" name="to" value="to" />
+			<label for="to">Poner direcciones en el campo "PARA"</label>
+			<br />
+			<input type="checkbox" id="cc" name="cc" value="cc" />
+			<label for="cc">Poner direcciones en el campo "CC" (con copia)</label>
+			<br />
+			<input type="checkbox" id="bcc" name="bcc" value="bcc" checked="checked" />
+			<label for="bcc">Poner direcciones en el campo "BCC" o "CCO" (con copia oculta)</label>
+			<br />
+			<input type="checkbox" id="incluirCuerpo" name="incluirCuerpo" value="1" checked="checked" />
+			<label for="incluirCuerpo">Incluir cuerpo del correo</label>
+			<br />
+			<label for="subject">Asunto del correo: </label>
+			<input type="text" id="subject" name="subject" value="" style="width:99%;" />
+			<br />
+			<label for="correos">Direcciones de correo: </label>
+			<br />
+			<textarea class="correos" id="correos" name="correos" autocomplete="off"></textarea>
+			<br />
+			<!-- <label for="correos">Cuerpo del correo: </label>
+			<br />
+			<textarea id="body" name="body"></textarea> -->
+			<br />
+			<input type="button" onclick="javascript:separarCorreos();" value="Separar correos" />
+			<input type="button" onclick="javascript:cargarEjemplo();" value="Cargar ejemplo" />
+			<input type="button" onclick="javascript:crearCorreos();" value="Crear todos los correos" id="botonEnviarTodos" style="display:none;" />
+		</form>
+		
+		<br />
+		<div id="contadorCorreos"></div>
+
+		<br />
+		<div id="correosNoValidos"></div>
+		
+		
+		<form>
+			<div id="bloquesCorreos"></div>
+		</form>
+		<br/>	<br/>
+		<div id="tituloEjemploCorreos">Ejemplo:</div>
+		<div id="ejemploCorreos">prueba1@prueba.com;   paco@paco@prueba.com;   prueba2_doble.prueba@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba2.algo@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		  prueba1@prueba.com;   prueba2@ejemplo.com;prueba3@ejemplo.org; prueba4@ejemplo.net;
+		</div>
+
+
+	</div>
+	<div class="holder_bottom"></div>
+
+	<!--
+	<div class="holder_top"></div>
+	<div class="holder">
+		
+	</div>
+	<div class="holder_bottom"></div>
+	-->
+	
+</div>
+</body>
+</html>
